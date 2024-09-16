@@ -12,12 +12,15 @@ export const getAllTodosCtrl = (req, res) => {
 export const deleteTodosCtrl = (req, res) => {
   const id = req.params.id;
   const index = database.todos.findIndex((el) => el.id == id);
-
-  if (index != -1) {
-    database.todos.splice(index, 1);
-    res.send("Se eliminó la tarea");
+  if (database.todos[index].owner == req.user.id) {
+    if (index != -1) {
+      database.todos.splice(index, 1);
+      res.send("Se eliminó la tarea");
+    } else {
+      res.send("No se encontró la tarea");
+    }
   } else {
-    res.send("No se encontró la tarea");
+    res.send("No tiene acceso para hacer eso");
   }
 };
 export const editTodosCtrl = (req, res) => {
@@ -25,34 +28,41 @@ export const editTodosCtrl = (req, res) => {
   console.log(id);
   const index = database.todos.findIndex((el) => el.id == id);
   //Si encuentra un título
-  if (req.body.title){
+  if (req.body.title) {
     if (index != -1) {
-      database.todos[index].title = req.body.title;
-      res.send("Se ha modificado la tarea");
-    } else {
-      res.send("No se encontró la tarea");
+      if (database.todos[index].owner == req.user.id) {
+        database.todos[index].title = req.body.title;
+        res.send("Se ha modificado la tarea");
+      } else {
+        res.send("No se encontró la tarea");
+      }
     }
-  }else if(req.body.done !== undefined){
-    if (index != -1) {
-      database.todos[index].completed = req.body.done;
-      res.send("Se ha modificado la tarea").status(200);
-    } else {
-      res.send("No se encontró la tarea").status(400);
+  } else if (req.body.done !== undefined) {
+    if (database.todos[index].owner == req.user.id) {
+      if (index != -1) {
+        database.todos[index].completed = req.body.done;
+        res.send("Se ha modificado la tarea").status(200);
+      } else {
+        res.send("No se encontró la tarea").status(400);
+      }
     }
-  }}
+  }
+};
 
 export const addTodosCtrl = (req, res) => {
   try {
-    console.log(req.user)
-    const idMax = Math.max(...database.todos.map((el)=> (el.owner == req.user.id ? el : null)))
-    console.log(idMax)
-    database.todos.push({
+    const idMax = Math.max(
+      ...database.todos.map((el) => (el.owner == req.user.id ? el.id : null))
+    );
+    console.log(idMax);
+    const datos = {
       title: req.body.title,
       owner: req.user.id,
       id: idMax + 1,
       completed: false,
-    });
-    res.send("Se agregó la tarea");
+    };
+    database.todos.push(datos);
+    res.send(datos);
   } catch (error) {
     console.log(error);
     res.send("Malió sal");
