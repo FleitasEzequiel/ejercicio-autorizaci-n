@@ -1,6 +1,7 @@
-
+import Swal from "sweetalert2"
+import { tarjeta } from "../components/tarjeta";
 export const todosPage = () => {
-  
+
   const container = document.createElement("div");
 
   container.classList.add(
@@ -8,13 +9,44 @@ export const todosPage = () => {
     "flex-col",
     "items-center",
     "justify-center",
-    "h-screen",
+    "h-full",
     "bg-gray-200",
   );
+  const $Agregar = document.createElement("div")
+  $Agregar.classList.add("bg-slate-200","z-10","justify-center","fixed","right-10","flex","text-center","bottom-10","h-10","w-40","rounded-lg","text-2xl","shadow-md","border-2","border-black")
+  const $botonAgregar = document.createElement("button")
+  $botonAgregar.textContent = "Add"
 
 
+  $Agregar.appendChild($botonAgregar)
+  // $Agregar.appendChild($iconoAgregar)
+  $botonAgregar.addEventListener("click",()=>{
+    Swal.fire({
+      title: 'Add ToDo',
+      input: "text",
+      inputLabel:"Title:",
+      showCancelButton: true,
+      confirmButtonText: 'Add',
+    }).then(
+      (result) => {
+        if (result.isConfirmed){
+          fetch("http://localhost:4000/todos/add",{
+            method:"POST",
+            credentials:"include",
+            headers:{
+              "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+              title:result.value
+            })
+          })
+        }
+      }
+    )
+  })
+  //Intento de Modal
   const $listaTareas = document.createElement("div");
-  $listaTareas.classList.add("flex","flex-col","gap-y-3")
+  $listaTareas.classList.add("flex","flex-col","gap-y-3","my-4")
   $listaTareas.id = "listaTareas";
 
   //Fetch para cada tarjeta
@@ -26,28 +58,13 @@ export const todosPage = () => {
     .then((data) => {
       data.todos.forEach((todo) => {
         const numero = data.todos.findIndex((el)=>el.id == todo.id)
-        console.log(numero);
-        const $tarjeta = document.createElement("div")
-        $tarjeta.classList.add("w-80","h-20","bg-gray-200","shadow-md","text-center","p-2","text-xl","rounded-lg","escondio")
-        $tarjeta.innerText = todo.title
-        $tarjeta.style= "filter:blur(3px); transform: translateY(200%)"
-
-        //Para ver cuándo aparece
-        $tarjeta.addEventListener("DOMNodeInserted",()=>{
-          setTimeout(() => {
-            $tarjeta.classList.remove("escondio")
-            $tarjeta.style=`
-            filter:blur(0);
-            transition: all 2s
-            `
-          }, 350*numero);
-        })
+        const $tarjeta = tarjeta(todo,numero)
         document.querySelector("#listaTareas").appendChild($tarjeta)
       })})
 
 
 
-
+  container.appendChild($Agregar)
   container.appendChild($listaTareas)
   return container;
 };
